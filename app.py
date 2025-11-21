@@ -1,6 +1,9 @@
 import os
 from flask import Flask, render_template, request
 
+# Print for debugging: Start of app initialization
+print("DEBUG: Starting app initialization and defining absolute paths...")
+
 # --- CRITICAL FIX 1: Use absolute paths to guarantee Flask finds the templates ---
 # Get the absolute path of the current directory (where app.py is located)
 basedir = os.path.dirname(os.path.abspath(__file__))
@@ -24,21 +27,27 @@ if not os.path.exists(NLTK_DATA_DIR):
 
 # Download NLTK resources to a temporary location if running remotely
 try:
+    print("DEBUG: Checking NLTK data...")
     # Set the path NLTK will use for downloads
     nltk.data.path.append(NLTK_DATA_DIR)
     nltk.data.find('tokenizers/punkt')
+    print("DEBUG: NLTK data found.")
 # FIX APPLIED: Catch LookupError (the correct exception for missing NLTK resources)
 except LookupError: 
+    print("DEBUG: NLTK data not found, downloading 'punkt'...")
     # Download the 'punkt' tokenizer to the defined absolute directory
     nltk.download('punkt', quiet=True, download_dir=NLTK_DATA_DIR)
+    print("DEBUG: NLTK download complete.")
 
 
 # 1. Initialize the Gemini Client
 # Client will automatically pick up GEMINI_API_KEY from environment variables on Render
 try:
+    print("DEBUG: Initializing Gemini client...")
     client = genai.Client()
+    print("DEBUG: Gemini client initialized successfully.")
 except Exception as e:
-    print(f"Error initializing Gemini client: {e}")
+    print(f"ERROR: Error initializing Gemini client: {e}")
     client = None
 
 def preprocess_question(question):
@@ -73,6 +82,7 @@ def get_llm_answer(prompt):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    print("DEBUG: Index route hit.")
     question = None
     processed_question = None
     llm_response = None
@@ -81,13 +91,16 @@ def index():
         question = request.form.get('question', '')
         
         if question:
+            print(f"DEBUG: Processing question: {question}")
             # 1. View the processed question
             processed_question = preprocess_question(question)
             
             # 2. See the LLM API response / 3. Display the generated answer
             llm_response = get_llm_answer(question)
+            print("DEBUG: LLM response received.")
             
     # Pass all variables to the HTML template
+    print("DEBUG: Attempting to render index.html...")
     return render_template('index.html', 
                             question=question, 
                             processed_question=processed_question, 

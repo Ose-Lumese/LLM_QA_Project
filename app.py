@@ -1,9 +1,12 @@
 import os
 from flask import Flask, render_template, request
 
-# --- CRITICAL FIX: Define the 'app' variable immediately ---
-# Gunicorn looks for this variable instantly.
-template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+# --- CRITICAL FIX 1: Use absolute paths to guarantee Flask finds the templates ---
+# Get the absolute path of the current directory (where app.py is located)
+basedir = os.path.dirname(os.path.abspath(__file__))
+template_path = os.path.join(basedir, 'templates')
+
+# Initialize Flask with the guaranteed template path
 app = Flask(__name__, template_folder=template_path)
 
 from google import genai
@@ -11,23 +14,22 @@ from google.genai import types
 import nltk
 import string
 
-# --- NEW: Explicitly set the NLTK data path to the current working directory ---
-# This guarantees NLTK downloads to a location the server can read.
-NLTK_DATA_DIR = os.path.join(os.getcwd(), 'nltk_data')
+# --- CRITICAL FIX 2: Use absolute paths for NLTK data to prevent silent startup failure ---
+# NLTK must be stored in a consistent, absolute location relative to app.py
+NLTK_DATA_DIR = os.path.join(basedir, 'nltk_data')
 os.environ['NLTK_DATA'] = NLTK_DATA_DIR
 if not os.path.exists(NLTK_DATA_DIR):
     os.makedirs(NLTK_DATA_DIR)
 # -----------------------------------------------------------------------------
 
 # Download NLTK resources to a temporary location if running remotely
-# The current directory is typically writable in PaaS environments.
 try:
     # Set the path NLTK will use for downloads
     nltk.data.path.append(NLTK_DATA_DIR)
     nltk.data.find('tokenizers/punkt')
-# FIX APPLIED HERE: Catch LookupError 
+# FIX APPLIED: Catch LookupError (the correct exception for missing NLTK resources)
 except LookupError: 
-    # Set the NLTK data directory to a location writable by the application
+    # Download the 'punkt' tokenizer to the defined absolute directory
     nltk.download('punkt', quiet=True, download_dir=NLTK_DATA_DIR)
 
 
@@ -80,8 +82,6 @@ def index():
         
         if question:
             # 1. View the processed question
-            # NOTE: We send the original question to the LLM for the best result, 
-            # but preprocess it here for display/demonstration purposes.
             processed_question = preprocess_question(question)
             
             # 2. See the LLM API response / 3. Display the generated answer
@@ -94,6 +94,5 @@ def index():
                             llm_response=llm_response)
 
 if __name__ == '__main__':
-    # When running locally, Flask runs directly
     # For Render, Gunicorn runs the app using 'gunicorn app:app'
     app.run(debug=True)

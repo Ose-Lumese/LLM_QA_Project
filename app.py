@@ -10,7 +10,9 @@ from google.genai import types
 import nltk
 import string
 
-
+# --- NEW: Explicitly set the NLTK data path to the current working directory ---
+# This guarantees NLTK downloads to a location the server can read.
+NLTK_DATA_DIR = os.path.join(os.getcwd(), 'nltk_data')
 os.environ['NLTK_DATA'] = NLTK_DATA_DIR
 if not os.path.exists(NLTK_DATA_DIR):
     os.makedirs(NLTK_DATA_DIR)

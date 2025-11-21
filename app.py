@@ -3,7 +3,7 @@ from flask import Flask, render_template, request
 
 # --- CRITICAL FIX: Define the 'app' variable immediately ---
 # Gunicorn looks for this variable instantly.
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 from google import genai
 from google.genai import types

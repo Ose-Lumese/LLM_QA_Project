@@ -1,6 +1,8 @@
 import os
 from flask import Flask, render_template, request
 
+# --- CRITICAL FIX: Define the 'app' variable immediately ---
+# Gunicorn looks for this variable instantly.
 app = Flask(__name__)
 
 from google import genai
@@ -8,13 +10,22 @@ from google.genai import types
 import nltk
 import string
 
+
+os.environ['NLTK_DATA'] = NLTK_DATA_DIR
+if not os.path.exists(NLTK_DATA_DIR):
+    os.makedirs(NLTK_DATA_DIR)
+# -----------------------------------------------------------------------------
+
 # Download NLTK resources to a temporary location if running remotely
 # The current directory is typically writable in PaaS environments.
 try:
+    # Set the path NLTK will use for downloads
+    nltk.data.path.append(NLTK_DATA_DIR)
     nltk.data.find('tokenizers/punkt')
-except nltk.downloader.DownloadError:
+# FIX APPLIED HERE: Catch LookupError 
+except LookupError: 
     # Set the NLTK data directory to a location writable by the application
-    nltk.download('punkt', quiet=True)
+    nltk.download('punkt', quiet=True, download_dir=NLTK_DATA_DIR)
 
 
 # 1. Initialize the Gemini Client

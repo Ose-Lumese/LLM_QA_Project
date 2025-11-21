@@ -1,5 +1,8 @@
 import os
 from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
 from google import genai
 from google.genai import types
 import nltk
@@ -13,7 +16,6 @@ except nltk.downloader.DownloadError:
     # Set the NLTK data directory to a location writable by the application
     nltk.download('punkt', quiet=True)
 
-app = Flask(__name__)
 
 # 1. Initialize the Gemini Client
 # Client will automatically pick up GEMINI_API_KEY from environment variables on Render
